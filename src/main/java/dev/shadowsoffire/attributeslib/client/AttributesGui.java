@@ -374,14 +374,18 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
         int top = this.topPos + 15;
         if (pMouseX >= left && pMouseX < left + 12 && pMouseY >= top && pMouseY < top + 155) {
             this.scrolling = true;
-            int i = this.topPos + 15;
-            int j = i + 138;
-            scrollOffset = ((float) pMouseY - i - 7.5F) / (j - i - 15.0F);
-            scrollOffset = Mth.clamp(scrollOffset, 0.0F, 1.0F);
-            this.startIndex = (int) (scrollOffset * this.getOffScreenRows() + 0.5D);
-            return true;
+            return updateScrollOffset((float) pMouseY);
         }
         return false;
+    }
+
+    private boolean updateScrollOffset(float pMouseY) {
+        int i = this.topPos + 15;
+        int j = i + 138;
+        scrollOffset = (pMouseY - i - 7.5F) / (j - i - 15.0F);
+        scrollOffset = Mth.clamp(scrollOffset, 0.0F, 1.0F);
+        this.startIndex = (int) (scrollOffset * this.getOffScreenRows() + 0.5D);
+        return true;
     }
 
     @Override
@@ -390,12 +394,7 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
             return false;
         }
         if (this.scrolling && this.isScrollBarActive()) {
-            int i = this.topPos + 15;
-            int j = i + 138;
-            scrollOffset = ((float) pMouseY - i - 7.5F) / (j - i - 15.0F);
-            scrollOffset = Mth.clamp(scrollOffset, 0.0F, 1.0F);
-            this.startIndex = (int) (scrollOffset * this.getOffScreenRows() + 0.5D);
-            return true;
+            return updateScrollOffset((float) pMouseY);
         }
         else {
             return false;
