@@ -53,10 +53,14 @@ public class AttributeSorter {
     }
 
     private static boolean isIconCodePoint(int codePoint) {
-        return (codePoint >= 0xE000 && codePoint <= 0xF8FF) || // Private Use Area
-                (codePoint >= 0xF0000 && codePoint <= 0x10FFFF) || // Supplementary Private Use Area
-                (codePoint >= 0x1CD00 && codePoint <= 0x1CDEF) || // Extension Private Use Area
-                (codePoint >= 0x2700 && codePoint <= 0x27BF); // Misc Symbols (Dingbats)
+        return (codePoint >= 0xF900 && codePoint <= 0xFAFF) || // CJK Compatibility Ideographs (Prom 2 compat)
+                (codePoint >= 0xE000 && codePoint <= 0xF8FF) || // Private Use Area
+                (codePoint >= 0xF0000 && codePoint <= 0xFFFFF) || // Supplementary Private Use Area-A
+                (codePoint >= 0x100000 && codePoint <= 0x10FFFD) || // Supplementary Private Use Area-B
+                (codePoint >= 0xDC00 && codePoint <= 0xDFFF) || // Low Surrogate Area
+                (codePoint >= 0xD800 && codePoint <= 0xDBFF) || // High Surrogate Area
+                (codePoint >= 0x1CC00 && codePoint <= 0x1CEBF) || // Symbols for Legacy Computing Supplement (RPG series icons compat)
+                (codePoint >= 0x2700 && codePoint <= 0x27BF); // Dingbats
     }
 
     public static void clearCache() {
