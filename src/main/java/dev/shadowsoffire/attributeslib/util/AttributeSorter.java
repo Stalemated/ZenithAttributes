@@ -1,6 +1,5 @@
 package dev.shadowsoffire.attributeslib.util;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -35,15 +34,17 @@ public class AttributeSorter {
             return new AttributeData("", false);
         }
 
-        ChatFormatting.stripFormatting(rawName);
         StringBuilder clean = new StringBuilder(rawName.length());
         boolean hasIcon = false;
+        boolean skipNext = false;
 
         for (int i = 0; i < rawName.length(); ) {
             int codePoint = rawName.codePointAt(i);
             int charCount = Character.charCount(codePoint);
 
-            if (isIconCodePoint(codePoint)) hasIcon = true;
+            if (skipNext) skipNext = false;
+            else if (codePoint == 167) skipNext = true;
+            else if (isIconCodePoint(codePoint)) hasIcon = true;
             else clean.appendCodePoint(codePoint);
 
             i += charCount;
@@ -60,7 +61,9 @@ public class AttributeSorter {
                 (codePoint >= 0xDC00 && codePoint <= 0xDFFF) || // Low Surrogate Area
                 (codePoint >= 0xD800 && codePoint <= 0xDBFF) || // High Surrogate Area
                 (codePoint >= 0x1CC00 && codePoint <= 0x1CEBF) || // Symbols for Legacy Computing Supplement (RPG series icons compat)
-                (codePoint >= 0x2700 && codePoint <= 0x27BF); // Dingbats
+                (codePoint >= 0x2700 && codePoint <= 0x27BF) || // Dingbats
+                (codePoint >= 0xAB00 && codePoint <= 0xAB2F) || // Ethiopic Extended-A (Eldritch End compat)
+                (codePoint >= 0xA980 && codePoint <= 0xA9DF); // Javanese (Eldritch End compat)
     }
 
     public static void clearCache() {
