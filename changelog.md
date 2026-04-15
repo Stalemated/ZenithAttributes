@@ -1,7 +1,7 @@
 
 
 ## 1.0.1
-* Added a config to tweak Ancient Knowledge's modifier as well as its multiplier curve type (SQUARE (Default), EXPONENTIAL, LINEAR)
+* Added a config to tweak Ancient Knowledge's modifier as well as its multiplier curve type (SQUARE (Default), EXPONENTIAL, LINEAR) (regen the config again)
 
 ## 1.0.0
 * Add icon-aware attribute ordering, where attributes with icons show up on top of the attribute list, can be toggled in config (please regen it)
