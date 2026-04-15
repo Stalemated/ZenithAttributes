@@ -1,7 +1,8 @@
 
 
-## 0.2.11
+## 1.0.0
 * Add icon-aware attribute ordering, where attributes with icons show up on top of the attribute list, can be toggled in config (please regen it)
+* Bump to 1.0.0 (as I don't want this to be an always-in-beta versioning)
 
 ## 0.2.10
 * Yeet combat rule changes, should be temporary (but nothing is more permanent as they say...)

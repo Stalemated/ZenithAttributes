@@ -82,7 +82,7 @@ dependencies {
 	modCompileOnly "curse.maven:conjuring-422310:${project.conjuring_id}"
 
 	//Artifacts (They register attributes to their items that work differently than normal)
-	modCompileOnly ("curse.maven:artifacts-312353:5301482")
+	modCompileOnly ("curse.maven:artifacts-312353:${project.artifacts_id}")
 }
 
 loom {
@@ -122,11 +122,12 @@ publishing {
 	}
 }
 
+/*
 modrinth {
 	token = System.getenv("MODRINTH_TOKEN")
 	projectId = "zenith-attributes"
 	versionType = "beta"
-	versionName = "Zenith Attributes " + project.version
+	versionName = "Zenith Attributes Renewed " + project.version
 	uploadFile = remapJar
 	gameVersions = ["1.20.1"]
 	loaders = ["fabric"]
@@ -138,7 +139,7 @@ modrinth {
 	}
 }
 
-task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge) {
+publishCurseForge {
 	apiToken = System.getenv("cf_token")
 	def mainFile = upload(910078, remapJar)
 	mainFile.changelog = "https://github.com/Stalemated/ZenithAttributes/blob/master/changelog.md"
@@ -146,5 +147,5 @@ task publishCurseForge(type: net.darkhax.curseforgegradle.TaskPublishCurseForge)
 	//mainFile.addJavaVersion("17")
 	mainFile.addGameVersion("1.20.1")
 	mainFile.addModLoader("fabric")
-	mainFile.displayName = "zenith_attributes-" + project.version
-}
+	mainFile.displayName = "Zenith Attributes Renewed " + project.version
+}*/

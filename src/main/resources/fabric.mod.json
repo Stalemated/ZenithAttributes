@@ -2,16 +2,19 @@
 	"schemaVersion": 1,
 	"id": "zenith_attributes",
 	"version": "${version}",
-	"name": "Zenith Attributes",
-	"description": "Adds attributes, needed for Zenith",
+	"name": "Zenith Attributes Renewed",
+	"description": "The core attribute engine for Zenith Renewed.",
 	"authors": [
+		"Stalemated",
 		"ShadowsOfFire (Forge)",
 		"TheWinABagel (Fabric Port)"
 	],
 	"contact": {
-		"sources": "https://github.com/TheWinABagel/ZenithAttributes"
+		"sources": "https://github.com/Stalemated/ZenithAttributesRenewed",
+		"issues": "https://github.com/Stalemated/ZenithAttributesRenewed/issues",
+		"homepage": "https://www.curseforge.com/minecraft/mc-mods/zenith-attributes-renewed"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/zenith_attributes/icon.png",
 	"environment": "*",
 	"entrypoints": {
