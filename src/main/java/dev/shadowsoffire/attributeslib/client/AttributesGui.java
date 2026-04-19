@@ -6,10 +6,12 @@ import dev.shadowsoffire.attributeslib.ALConfig;
 import dev.shadowsoffire.attributeslib.AttributesLib;
 import dev.shadowsoffire.attributeslib.api.ALObjects;
 import dev.shadowsoffire.attributeslib.api.IFormattableAttribute;
+import dev.shadowsoffire.attributeslib.compat.SpellPowerCompat;
 import dev.shadowsoffire.attributeslib.mixin.accessors.AbstractContainerScreenAccessor;
 import dev.shadowsoffire.attributeslib.mixin.accessors.GuiGraphicsAccessor;
 import dev.shadowsoffire.attributeslib.util.AttributeSorter;
 import dev.shadowsoffire.placebo.PlaceboClient;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -101,7 +103,18 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
                 .map(this.player::getAttribute)
                 .filter(Objects::nonNull)
                 .filter(ai -> !ALConfig.hiddenAttributes.contains(BuiltInRegistries.ATTRIBUTE.getKey(ai.getAttribute())))
-                .filter(ai -> !hideUnchanged || (ai.getBaseValue() != ai.getValue()))
+                .filter(ai -> {
+                    if (!hideUnchanged) return true;
+
+                    double val = ai.getValue();
+                    double baseVal = ai.getBaseValue();
+                    if (FabricLoader.getInstance().isModLoaded("spell_power")) {
+                        val = SpellPowerCompat.getRealSpellValue(ai.getAttribute(), this.player, val);
+                        baseVal = SpellPowerCompat.getRealSpellBaseValue(ai.getAttribute(), baseVal);
+                    }
+
+                    return baseVal != val;
+                })
                 .filter(ai -> !Double.isNaN(ai.getValue()))
                 .forEach(this.data::add);
 
@@ -210,16 +223,21 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
                 list.add(txt);
             }
 
+            double currentVal = inst.getValue();
+            if (FabricLoader.getInstance().isModLoaded("spell_power")) {
+                currentVal = SpellPowerCompat.getRealSpellValue(attr, this.player, currentVal);
+            }
+
             ChatFormatting color = ChatFormatting.GRAY;
             if (attr instanceof RangedAttribute) {
-                if (inst.getValue() > inst.getBaseValue()) {
+                if (currentVal > inst.getBaseValue()) {
                     color = ChatFormatting.YELLOW;
                 }
-                else if (inst.getValue() < inst.getBaseValue()) {
+                else if (currentVal < inst.getBaseValue()) {
                     color = ChatFormatting.RED;
                 }
             }
-            Component valueComp = fAttr.toValueComponent(null, inst.getValue(), AttributesLib.getTooltipFlag()).withStyle(color);
+            Component valueComp = fAttr.toValueComponent(null, currentVal, AttributesLib.getTooltipFlag()).withStyle(color);
             Component baseComp = fAttr.toValueComponent(null, inst.getBaseValue(), AttributesLib.getTooltipFlag()).withStyle(ChatFormatting.GRAY);
             if (!isDynamic) {
                 list.add(CommonComponents.EMPTY);
@@ -341,7 +359,17 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
         stack.pushPose();
 
         var attr = (IFormattableAttribute) inst.getAttribute();
-        MutableComponent value = attr.toValueComponent(null, inst.getValue(), TooltipFlag.Default.NORMAL);
+
+        double displayValue = inst.getValue();
+        double baseDisplayValue = inst.getBaseValue();
+
+        // Spell Power compat
+        if (FabricLoader.getInstance().isModLoaded("spell_power")) {
+            displayValue = SpellPowerCompat.getRealSpellValue(inst.getAttribute(), this.player, displayValue);
+            baseDisplayValue = SpellPowerCompat.getRealSpellBaseValue(inst.getAttribute(), baseDisplayValue);
+        }
+
+        MutableComponent value = attr.toValueComponent(null, displayValue, TooltipFlag.Default.NORMAL);
 
         if (BuiltInRegistries.ATTRIBUTE.wrapAsHolder(inst.getAttribute()).is(ALObjects.Tags.DYNAMIC_BASE_ATTRIBUTES)) {
             value = Component.literal("\uFFFD");
@@ -355,10 +383,10 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
 
         int color = 0xFFFFFF;
         if (attr instanceof RangedAttribute) {
-            if (inst.getValue() > inst.getBaseValue()) {
+            if (displayValue > baseDisplayValue) {
                 color = 0x55DD55;
             }
-            else if (inst.getValue() < inst.getBaseValue()) {
+            else if (displayValue < baseDisplayValue) {
                 color = 0xFF6060;
             }
         }
@@ -454,8 +482,8 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
     /**
      * Builds a component containing the mathematical representation of the attribute calculations.
      *
-     * @param base          A component of the base value. May be a string if the attribute is dynamic.
-     * @param value         A component of the final value. May be a string if the attribute is dynamic.
+     * @param base          A component of the base value. It may be a string if the attribute is dynamic.
+     * @param value         A component of the final value. It may be a string if the attribute is dynamic.
      * @param numericValues The modifier totals, in operation ordinal order (add, mulBase, mulTotal)
      * @return A component holding the formula with colors already applied.
      */

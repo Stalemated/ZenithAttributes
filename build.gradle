@@ -23,6 +23,7 @@ repositories {
 	maven { url = "https://maven.shedaniel.me" }						//REI, Arch
 	maven { url = "https://maven.terraformersmc.com" }					//Trinkets, EMI
 	maven { url = "https://cursemaven.com" }							//Conjuring
+	maven { url = 'https://maven.kosmx.dev/' }                          //Player Animation
 	mavenLocal()														//Fakerlib TODO Create maven/move to jitpack
 }
 
@@ -62,6 +63,17 @@ dependencies {
 
 	//Mixin^2 for mod compat
 	implementation(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-fabric:${project.mixin_squared_version}"))
+
+	//Spell power + Spell engine
+	modRuntimeOnly (modCompileOnly "maven.modrinth:spell-power:${project.spell_power_version}-fabric")
+	modRuntimeOnly "maven.modrinth:spell-engine:${project.spell_engine_version}-fabric"
+	modRuntimeOnly "com.github.ZsoltMolnarrr:TinyConfig:${project.tiny_config_version}"
+	modRuntimeOnly "dev.kosmx.player-anim:player-animation-lib-fabric:${project.player_anim_version}"
+
+	// Cloth config
+	modApi("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}") {
+		exclude(group: "net.fabricmc.fabric-api")
+	}
 
 	// REI
 	modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:${project.rei_version}"
