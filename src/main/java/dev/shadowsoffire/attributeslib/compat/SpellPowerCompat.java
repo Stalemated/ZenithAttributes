@@ -2,6 +2,7 @@ package dev.shadowsoffire.attributeslib.compat;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.spell_power.api.SpellPower;
 import net.spell_power.api.SpellSchool;
 import net.spell_power.api.SpellSchools;
@@ -16,7 +17,7 @@ public class SpellPowerCompat {
         try {
 
             for (SpellSchool school : SpellSchools.all()) {
-                if (school.attribute == attribute) {
+                if (school.attribute == attribute && school.attribute != Attributes.ATTACK_DAMAGE) {
                     return SpellPower.getSpellPower(school, entity).baseValue();
                 }
             }

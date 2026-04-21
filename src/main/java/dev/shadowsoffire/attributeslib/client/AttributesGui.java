@@ -32,15 +32,14 @@ import net.minecraft.network.chat.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.MobType;
+import net.minecraft.world.entity.ai.attributes.*;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation;
-import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.DecimalFormat;
@@ -107,12 +106,9 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
                 .filter(ai -> {
                     if (!hideUnchanged) return true;
 
-                    double val = ai.getValue();
-                    double baseVal = ai.getBaseValue();
-                    if (FabricLoader.getInstance().isModLoaded("spell_power")) {
-                        val = SpellPowerCompat.getRealSpellValue(ai.getAttribute(), this.player, val);
-                        baseVal = SpellPowerCompat.getRealSpellBaseValue(ai.getAttribute(), baseVal);
-                    }
+                    double[] arrVal;
+                    arrVal = enchantmentCompat(ai, this.player);
+                    double val = arrVal[0], baseVal = arrVal[1];
 
                     return baseVal != val;
                 })
@@ -227,11 +223,16 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
             double currentVal = inst.getValue();
             double baseVal = inst.getBaseValue();
             double spBonus = 0;
+            double enchBonus = 0;
 
             if (FabricLoader.getInstance().isModLoaded("spell_power")) {
                 currentVal = SpellPowerCompat.getRealSpellValue(attr, this.player, currentVal);
                 baseVal = SpellPowerCompat.getRealSpellBaseValue(attr, baseVal);
                 spBonus = SpellPowerCompat.getSpellPowerBonus(attr, currentVal, baseVal, inst.getValue(), inst.getBaseValue());
+            }
+            if (attr == Attributes.ATTACK_DAMAGE) {
+                enchBonus = EnchantmentHelper.getDamageBonus(this.player.getMainHandItem(), MobType.UNDEFINED);
+                currentVal += enchBonus;
             }
 
             ChatFormatting color = ChatFormatting.GRAY;
@@ -267,7 +268,7 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
                 this.addComp(txt, finalTooltip);
             }
 
-            boolean hasModifiers = inst.getModifiers().stream().anyMatch(modif -> modif.getAmount() != 0) || Math.abs(spBonus) > 0.0001;
+            boolean hasModifiers = inst.getModifiers().stream().anyMatch(modif -> modif.getAmount() != 0) || Math.abs(spBonus) > 0.0001 || enchBonus > 0;
 
             if (hasModifiers) {
                 this.addComp(CommonComponents.EMPTY, finalTooltip);
@@ -280,11 +281,18 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
                 }
 
                 UUID spUuid = UUID.fromString("c537fe6b-026c-4519-8f72-02abb286c5c9");
+                UUID enchUuid = UUID.fromString("162de77a-53b3-4e24-a982-3947164d3160");
 
                 if (FabricLoader.getInstance().isModLoaded("spell_power")) {
                     ItemStack book = new ItemStack(Items.ENCHANTED_BOOK);
                     ModifierSource<?> spSource = new ModifierSource.ItemModifierSource(book);
                     modifiersToSources.put(spUuid, spSource);
+                }
+
+                if (enchBonus > 0) {
+                    ItemStack book = new ItemStack(Items.ENCHANTED_BOOK);
+                    ModifierSource<?> enchSource = new ModifierSource.ItemModifierSource(book);
+                    modifiersToSources.put(enchUuid, enchSource);
                 }
 
                 MutableComponent[] opValues = new MutableComponent[3];
@@ -296,6 +304,11 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
                     if (op == Operation.MULTIPLY_BASE && Math.abs(spBonus) > 0.0001) {
                         AttributeModifier spMod = new AttributeModifier(spUuid, "Spell Power / Enchants", spBonus, Operation.MULTIPLY_BASE);
                         modifiers.add(spMod);
+                    }
+
+                    if (op == Operation.ADDITION && enchBonus > 0) {
+                        AttributeModifier enchMod = new AttributeModifier(enchUuid, "Enchantment Bonus", enchBonus, Operation.ADDITION);
+                        modifiers.add(enchMod);
                     }
 
                     double opValue = modifiers.stream().mapToDouble(AttributeModifier::getAmount).reduce(op == Operation.MULTIPLY_TOTAL ? 1 : 0, (res, elem) -> op == Operation.MULTIPLY_TOTAL ? res * (1 + elem) : res + elem);
@@ -385,14 +398,9 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
 
         var attr = (IFormattableAttribute) inst.getAttribute();
 
-        double displayValue = inst.getValue();
-        double baseDisplayValue = inst.getBaseValue();
-
-        // Spell Power compat
-        if (FabricLoader.getInstance().isModLoaded("spell_power")) {
-            displayValue = SpellPowerCompat.getRealSpellValue(inst.getAttribute(), this.player, displayValue);
-            baseDisplayValue = SpellPowerCompat.getRealSpellBaseValue(inst.getAttribute(), baseDisplayValue);
-        }
+        double[] arrVal;
+        arrVal = enchantmentCompat(inst, this.player);
+        double displayValue = arrVal[0], baseDisplayValue = arrVal[1];
 
         MutableComponent value = attr.toValueComponent(null, displayValue, TooltipFlag.Default.NORMAL);
 
@@ -559,6 +567,19 @@ public class AttributesGui implements Renderable, GuiEventListener, NarratableEn
         return "" + ChatFormatting.PREFIX_CODE + color.getChar() + str + ChatFormatting.PREFIX_CODE + ChatFormatting.RESET.getChar();
     }
 
+    private double[] enchantmentCompat(AttributeInstance ai, Player player) {
+        double val = ai.getValue();
+        double baseVal = ai.getBaseValue();
+        if (FabricLoader.getInstance().isModLoaded("spell_power")) {
+            val = SpellPowerCompat.getRealSpellValue(ai.getAttribute(), player, val);
+            baseVal = SpellPowerCompat.getRealSpellBaseValue(ai.getAttribute(), baseVal);
+        }
+        if (ai.getAttribute() == Attributes.ATTACK_DAMAGE) {
+            val += EnchantmentHelper.getDamageBonus(player.getMainHandItem(), MobType.UNDEFINED);
+        }
+
+        return new double[]{val, baseVal};
+    }
 
     @Override
     public NarrationPriority narrationPriority() {
